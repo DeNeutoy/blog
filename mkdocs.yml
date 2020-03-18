@@ -1,0 +1,25 @@
+site_name: Mark Neumann's Blog
+
+nav:
+  - About Me: AboutMe.md
+
+theme:
+  name: material
+  palette:
+    primary: white
+    accent: blue
+  highlightjs: true
+  hljs_languages:
+  - python
+  - typescript
+  - json
+
+
+markdown_extensions:
+  - toc:
+        permalink: '#'
+  - markdown.extensions.codehilite:
+        guess_lang: true
+  - admonition
+  - codehilite
+  - extra
