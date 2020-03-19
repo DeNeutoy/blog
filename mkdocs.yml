@@ -3,8 +3,13 @@ site_name: Mark Neumann's Blog
 nav:
   - About Me: AboutMe.md
 
+  - Other:
+    - Cycling - Eugene, OR to San Fransisco: other/eugene_to_sf.md
+
 theme:
   name: material
+  favicon: img/favicon.png
+  logo: img/favicon.png
   palette:
     primary: white
     accent: blue
