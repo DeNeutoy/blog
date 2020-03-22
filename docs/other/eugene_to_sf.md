@@ -64,11 +64,11 @@ I took a bit of a rest day today, partly because I was tired, and partly because
 
 ### Day 6: Mendocino, CA to Gualala, CA (50 miles)
 
-Surprisingly, this was the hardest day yet. In total, there was 5000ft of climbing (and descending), which was the same as the ride out to the coast yesterday, but significantly twistier, and difficult to maintain any kind of speed. Also, it was _so_ windy, which really killed my speed on the flat sections. 
+Surprisingly, this was the hardest day yet. In total, there was 5000ft of climbing (and descending), which was the same as the ride out to the coast yesterday, but significantly twistier, and difficult to maintain any kind of speed. Also, it was _so_ windy, which really killed my speed on the flat sections. Just outside of Point Arena I stopped at the most village shop i've ever been into, and had a bottle of fanta and a crab sandwich, which both might have been lifesaving.
 
 ![map mendocino gualala](/img/other/eugene_to_sf/mendocino_gualala.png)
 
-Mendocino is a very cute town, which I learnt is often used as a set in films, because apparently it has a style which is specifically "Maine", but it's on the west coast, which makes it easier for the film studios in LA to get to. Weird. Mendocino is also a bit of a hub for foraging, and it's definetly a place i'd like to return to and spend a bit more time.
+Mendocino is a very cute town, which I learnt is often used as a set in films, because apparently it has a style which is specifically "Maine", but it's on the west coast, which makes it easier for the film studios in LA to get to. Weird. I splashed out a bit here and stayed in a hotel/spa with an outdoor hot tub and sauna, which was a great way to steam out the lactic acid in my legs. Mendocino is also a bit of a hub for foraging, and it's definetly a place i'd like to return to and spend a bit more time.
 
 
 ### Day 7: Gualala, CA to San Fransisco (20 miles + bus + train)
