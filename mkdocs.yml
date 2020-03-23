@@ -1,4 +1,4 @@
-site_name: Mark N/Blog
+site_name: markn/writing
 
 nav:
   - SpaCy's Dependency Matcher - An Introduction: dependency_matcher.md
