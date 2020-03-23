@@ -1,7 +1,6 @@
-site_name: Mark Neumann's Blog
+site_name: Mark N/Blog
 
 nav:
-  - About Me: AboutMe.md
   - SpaCy's Dependency Matcher - An Introduction: dependency_matcher.md
   - Other:
     - Cycling - Eugene, OR to San Fransisco: other/eugene_to_sf.md

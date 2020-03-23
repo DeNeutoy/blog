@@ -1,6 +1,6 @@
 *This blog post has a [Google Colab](https://colab.research.google.com/drive/1E8zYMATPO4JzuRa1ws59LYyIkHQDENuZ) where you can follow along, if you prefer to jump into the code straight away.*
 
-## Hey, haven't you heard of the `Matcher`?
+## What's a `Matcher`?
 Spacy has a [beautifully designed, flexible `Matcher` class](https://spacy.io/usage/rule-based-matching), which allows matching for arbitrary tokens/token sequences based off of a lot of different attributes. The `Matcher` is very powerful, and allows you to bootstrap a lot of NLP based tasks, such as entity extraction.
 
 However, sometimes you want to look for patterns that occur at the sentence level, or involve multiple words/phrases in a structured format. This particularly occurs with relation extraction, where you might know that a lot of different patterns correspond to the same relation, but don't always occur next to each other in sentences. For example,
