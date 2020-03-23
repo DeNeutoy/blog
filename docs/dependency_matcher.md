@@ -194,7 +194,7 @@ that you might search for to occur multiple times in a single sentence.
 
 Running the above code results in the following subtrees:
 
-![subtrees](/img/dependency_matcher/dependency_paths.png)
+![subtrees](./img/dependency_matcher/dependency_paths.png)
 
 So we've successfully matched a dependency path which often expresses a relation!
 This blog post is just an example, but you can imagine mining a larger amount of

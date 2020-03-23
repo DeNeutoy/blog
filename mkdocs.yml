@@ -2,8 +2,7 @@ site_name: Mark N/Blog
 
 nav:
   - SpaCy's Dependency Matcher - An Introduction: dependency_matcher.md
-  - Other:
-    - Cycling - Eugene, OR to San Fransisco: other/eugene_to_sf.md
+  - Cycling - Eugene, OR to San Fransisco: eugene_to_sf.md
 
 theme:
   name: material
@@ -17,7 +16,6 @@ theme:
   - python
   - typescript
   - json
-
 
 markdown_extensions:
   - toc:

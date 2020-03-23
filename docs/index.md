@@ -7,4 +7,4 @@ I'm a computer scientist interested in research, natural language processing and
 # Pages
 
 ## [An introduction to SpaCy's `DependencyMatcher`](./dependency_matcher.md)
-## [Cycling from Eugene, OR, to San Francisco, CA](./other/eugene_to_sf.md)
+## [Cycling from Eugene, OR, to San Francisco, CA](./eugene_to_sf.md)
