@@ -8,3 +8,4 @@ I'm a computer scientist interested in research, natural language processing and
 
 ## [An introduction to SpaCy's `DependencyMatcher`](./dependency_matcher.md)
 ## [Cycling from Eugene, OR, to San Francisco, CA](./eugene_to_sf.md)
+## [Paper Review: ELECTRA](./paper_reviews/electra.md)

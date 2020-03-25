@@ -3,6 +3,8 @@ site_name: markn/writing
 nav:
   - SpaCy's Dependency Matcher - An Introduction: dependency_matcher.md
   - Cycling - Eugene, OR to San Fransisco: eugene_to_sf.md
+  - Paper Reviews:
+    - ELECTRA: ./paper_reviews/electra.md
 
 theme:
   name: material
@@ -17,6 +19,9 @@ theme:
   - typescript
   - json
 
+extra_javascript:
+  - 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML'
+
 markdown_extensions:
   - toc:
         permalink: '#'
@@ -25,3 +30,8 @@ markdown_extensions:
   - admonition
   - codehilite
   - extra
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
