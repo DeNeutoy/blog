@@ -40,11 +40,10 @@ For example, an approach which occured to me when reading this paper is pretrain
 
 The one downside to this paper is that there is no intrinisc analysis of the Discriminator network that is so effective at downstream tasks. For example, it would be interesting to know if the new discriminator loss function induces any interesting behaviour in the representations themselves - how do they differ from representations learnt by BERT, for example? 
 
-Given that the Discriminator loss is directly trained to predict disfluency, is it well calibrated enough to use for gramatical error detection type problems? Is there any bias intrinisc in which tokens the discriminator predicts as being disfluent (e.g by POS tag)? Does an average of the discriminator score over a sentence make for a great re-ranker for speech to text applications?
-
+Given that the Discriminator loss is directly trained to predict disfluency, is it well calibrated enough to use for gramatical error detection type problems? Is there any bias intrinisc in which tokens the discriminator predicts as being disfluent (e.g by POS tag)? Does an average of the discriminator score over a sentence make for a great re-ranker for speech to text applications? I felt like there was more to say here, but the paper didn't really expand on this at all.
 
 ### Conclusion
-Overall, I thought this paper was a simple idea executed extremely well, with a very informative acompanying paper. If you're interested in representation learning for text, I'd strongly recommend reading the full paper. It has a lot of details which are all too often missing in curent NLP/ML papers, it maintains a focus on computational efficiency throught and they've released code. 
+Overall, I thought this paper was a simple idea executed extremely well, with a very informative acompanying paper. If you're interested in representation learning for text, I'd strongly recommend reading the full paper. It has a lot of details which are all too often missing in curent NLP/ML papers, it maintains a focus on computational efficiency throughout and they've released code. 
 
 
 *Thanks for reading! This blog is open source, and you can suggest changes by making pull requests just by [editing the markdown files](https://github.com/DeNeutoy/blog/pulls). If you have comments, you can shout into the void on [Twitter](https://twitter.com/MarkNeumannnn).*
