@@ -1,12 +1,12 @@
 
 # ELECTRA: Pre-training text encoders as discriminators rather than generators
 
-### Authors
+## Authors :pencil:
 **Kevin Clark, Minh-Thang Luong, Quoc Le and Christopher Manning**
 
 **Google Brain/Stanford University**
 
-### TL;DR
+### TL;DR :zzz: :book:
 
 More efficient text encoders emerge from an attempt to do "GAN's for Text".
 

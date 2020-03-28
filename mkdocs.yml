@@ -5,6 +5,7 @@ nav:
   - Cycling - Eugene, OR to San Fransisco: eugene_to_sf.md
   - Paper Reviews:
     - ELECTRA: ./paper_reviews/electra.md
+    - No Explainability without Accountability: ./paper_reviews/interactivity_explainability.md
 
 theme:
   name: material
