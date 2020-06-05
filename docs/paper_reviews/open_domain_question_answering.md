@@ -185,21 +185,33 @@ Note of the efficiency of FAISS retrieval:
 
 ## Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks
 
-
 Builds on Dense Passage Retrieval by replacing the QA model with a seq2seq model. Couple of interesting points:
 
 They just keep the retrieval aspect of it fixed. This is surprising given the findings in REALM showing that this is very important. It's possible this is only important in the case that you are training the retriever end-to-end with no direct retrieval supervision and just QA pairs, rather than using supervision as they do in DPR.
 
+This paper and the REALM paper are great demonstrations of previous approaches to language modelling which try to do this, like Rob Logan's paper. The key difference seems to be: for most language modelling, you don't need to do very much retrieval at all. But for question answering, and in RAG's additional case, fact checking, you actually _do_ need to look at the retrieved evidence, otherwise the task is impossible.
+
+
+## Knowledge Guided Text Retrieval and Reading for Open Domain Question Answering
+
+Idea: retrieval based on a knowledge graph embedded in text, with the objective of integrating knowledge bases and free text, explictly using this graph structure for retrieval.
+
+
+### Method
+
+- constructs a graph over a number of articles using a knowledge base.
+- Retrieve a seed set of articles based on 1) entity linking from question, 2) TF-IDF search
+- Starting with the first paragraph of seed articles, run GraphRetriever:
+- - Add all passages related to previous ones according to a relation in wikipedia. 
+- - Add top, non-first wiki passages based on a BM25 ranking, with a "child" relation.
 
 
 
-## Entities as Experts: Sparse Memory Access with Entity Supervision
 
 
 ## Insights
 
- Latent Retrieval for Weakly Supervised Open Domain Question Answering andContextualized Sparse Representations for Real-Time Open-Domain Question Answering are solving inverse problems. Can they be combined in an interesting way?
-
+ Latent Retrieval for Weakly Supervised Open Domain Question Answering and Contextualized Sparse Representations for Real-Time Open-Domain Question Answering are solving inverse problems. Can they be combined in an interesting way?
 
 ## Future Directions
 
@@ -207,6 +219,7 @@ They just keep the retrieval aspect of it fixed. This is surprising given the fi
 **Index sparsity**
 
 Many of the above methods rely on doing ANN search over a very large corpus of embedded texts. Is there a way to make the output vectors sparse (not the model weights, but the output vectors) so that these indices are radically more efficient/compact?
+Actually maybe this is a bad idea.
 
 
 **Unsupervised Encoder fine-tuning**
