@@ -62,31 +62,9 @@ This small extension allows models which are much more expressive for *zero* cos
 
 Semantic role labelling is commonly used to describe "events" in natural language, which are normally focused around a verb (but sometimes also nouns) and it's arguments. These arguments also have thematic roles, such as "Agent" or "Instrument".
 
-One commonly used dataset for semantic role labelling is Onotnotes 5, which is annotated using the Propbank schema. Propbank defines arguments for each individual verb, and a set of general purpose modifier labels which can describe alterations/additions to the main event. These are the following:
+One commonly used dataset for semantic role labelling is Onotnotes 5, which is annotated using the Propbank schema. Propbank defines arguments for each individual verb, and a set of general purpose modifier labels which can describe alterations/additions to the main event, such as `Purpose`, `Negation`, `Temporal` and several more.
 
- - Purpose
- - Comitative
- - Location
- - Direction 
- - Goal
- - Manner
- - Temporal
- - Extent
- - Reciprocal
- - Secondary Predication
- - Cause
- - Discourse
- - Modal
- - Negation
- - Direct Speech
- - Light Verb
- - Adverbial
- - Adjectival
- - Purpose not cause
-
-
-
-A common reduction of this task in the NLP community is to ignore that the argument definitions are specific to a given verb (i.e that ARG0 may have a different meaning for the verb "eat" than the verb "defibrillate"). In some sense this is a "poor man's" semantic role labelling, and at first glance it seems like such a crude hack would not work particularly well. However, in practice, the arguments for different verbs actually do tend to correlate; ARG0 typically represents the "Agent", or the person/thing doing something in the event, and ARG1 typically represents the "Experiencer". Because of these distributional similarities in Propbank, this mangled version of SRL actually does carry some meaning, and as we are about to see, could be quite useful.
+A common reduction of this task in the NLP community is to ignore that the argument definitions are specific to a given verb (i.e that ARG0 may have a different meaning for the verb "eat" than the verb "defibrillate"). In some sense this is a "poor man's" semantic role labelling, and at first glance it seems like such a crude hack would not work particularly well. However, in practice, the arguments for different verbs actually do tend to correlate; ARG0 typically represents the "Agent", or the person/thing doing something in the event, and ARG1 typically represents the "Experiencer". Because of these distributional similarities in predicate arguments in Propbank, this mangled version of SRL actually does carry some meaning, and as we are about to see, could be quite useful.
 
 
 ### A Practical Analysis of a Bert-base SRL model
@@ -158,8 +136,150 @@ One reason for this is that SRL simply has fewer annotations, so these scores ar
 
 ### The problems with Ontonotes 5.0 annotations
 
-- Discourse Arguments
+If we are taking a practical approach to semantic role labelling, there are several modifications we can make to the Propbank schema to improve performance and remove things we don't care about.
+
+#### Discourse Arguments
+
+In Ontonotes 5.0, one of the more common argument modifiers is `Discourse`. 
+
+Here are the annotation guidelines for the Discourse Argument Modifier:
+
+!!! quote "1.4.12 Discourse (DIS)"
+    _These are markers which connect a sentence to a preceding sentence. Examples of discourse
+    markers are: also, however, too, as well, but, and, as we’ve seen before, instead, on the other
+    hand, for instance, etc. Additionally, vocatives wherein a name is spoken (e.g., ‘Alan, will you
+    go to the store?’) and interjections (e.g., ‘Gosh, I can’t believe it’) are treated as discourse
+    modifiers. Because discourse markers add little or no semantic value to the phrase, a good rule
+    of thumb for deciding if an element is a discourse marker is to think of the sentence without the
+    potential discourse marker. If the meaning of the utterance is unchanged, it is likely that the
+    element can be tagged as discourse._
+
+    Note that conjunctions such as ‘but’, ‘or’, ‘and’ are only marked in the beginning of the sentence.
+    Additionally, items that relate the instance undergoing annotation to a previous sentence such as
+    ‘however,’ ‘on the other hand,’ ‘also,’ and ‘in addition,’ should be tagged as DIS. However, these
+    elements can alternately be tagged as ADV when they relate arguments within the clause being
+    annotated (e.g. ‘Mary reads novels in addition to writing poetry.’) as opposed to relating to or
+    juxtaposing an element within the sentence to an element outside the sentence (e.g. ‘In addition,
+    Mary reads novels’). Often, but not always, when these elements connect the annotation instance
+    to a previous sentence, they occur at the beginning of the instance.
+
+This raises several questions - why are we predicting something that doesn't change the semantics of the sentence at all, and secondly, how do we decide which verb in the sentence it should be a modifier for? Sometimes identifying the _main_ event in a sentence is non-trivial.
+
+#### Argument Continuation
+
+Ontonotes 5.0 annotates argument continuation, for cases where a predicate's argument is dis-continuous, such as:
+
+```text
+[Linda, Doug ARG0] (who had been sleeping just moments earlier) and [Mary C-ARG0] [went V] to get a drink.
+
+["What you fail to understand" ARG1], [said V] [John ARG0], ["is that it is not possible" C-ARG1]. 
+
+```
+
+This annotation is implemented in a very hacky way in Onotonotes - the label is just prepended with a `C-` to mark it as being continued, and people typically just add it as another label in their model. This is quite gross, both from an annotation and a modelling point of view - but at least the evaluation script merges continued arguments before scoring, so they are at least correctly evaluated.
+
+For the core arguments, this type of continuation is not too uncommon, but are vanishingly rare for argument modifiers. Here are the span counts in the training and development splits of Ontonotes 5.0:
+
+```text
+Arg         Train Dev
+# Core Arguments
+C-ARG0      182   33
+C-ARG1      2230  329
+C-ARG2      183   24
+C-ARG3      9     1
+C-ARG4      16    1
+C-ARG5      0     0
+C-ARGA      0     0
+
+# Modifiers
+C-ARGM-MNR  24  8
+C-ARGM-ADV  17  2
+C-ARGM-EXT  14  1
+C-ARGM-TMP  12  1
+C-ARGM-LOC  9   0
+C-ARGM-DSP  2   0
+C-ARGM-CAU  2   0
+C-ARGM-PRP  1   0
+C-ARGM-MOD  1   0
+C-ARGM-ADJ  1   0
+C-ARGM-DIS  1   0  
+C-ARGM-NEG  1   0
+C-ARGM-COM  1   0
+C-ARGM-DIR  1   0
+```
+
+Taking a look at some of the occurences of modifier continuation in Ontonotes, it is either incorrect annotations, or very complex conditional statements within the modifier, such as "X happened either before Y, or after thing Z, but not both". In this case it seems to make sense to me to annotate these as separate modifiers - you could detect the presence of ambiguity for a given modifier just by seeing if a particular verb has multiple modifiers of the same type or not.
+
+#### Argument Reference
+
+
+#### Purpose, Cause and Purpose Not Cause Argument Modifiers
+
+
+#### 
+
 - Continuation/Reference
 - Ext
 
+### Simple SRL
+
+I don't have the details of this completely finalised yet, but here is an SRL model with some alterations to the label space, taking into consideration the above points.
+
+
+```text
+Number of Sentences    :       38375
+Number of Propositions :       34781
+Percentage of perfect props :  72.71
+
+              corr.  excess  missed    prec.    rec.      F1
+------------------------------------------------------------
+   Overall    68971   10997   10257    86.25   87.05   86.65
+----------
+      ARG0    16422    1417    1216    92.06   93.11   92.58
+      ARG1    25402    3220    2827    88.75   89.99   89.36
+      ARG2     8067    1400    1463    85.21   84.65   84.93
+      ARG3      499     189     177    72.53   73.82   73.17
+      ARG4      466     125     117    78.85   79.93   79.39
+      ARG5        9       3       7    75.00   56.25   64.29
+  ARGM-ADJ      164     100      90    62.12   64.57   63.32
+  ARGM-ADV     2074    1108    1094    65.18   65.47   65.32
+  ARGM-CAU      951     405     339    70.13   73.72   71.88
+  ARGM-COM       21      28      13    42.86   61.76   50.60
+  ARGM-DIR      353     184     196    65.74   64.30   65.01
+  ARGM-EXT      154     129     119    54.42   56.41   55.40
+  ARGM-LOC     1556     603     621    72.07   71.47   71.77
+  ARGM-LVB       48      10       7    82.76   87.27   84.96
+  ARGM-MNR     1429     537     564    72.69   71.70   72.19
+  ARGM-MOD     2770      56      54    98.02   98.09   98.05
+  ARGM-NEG     1508      73      53    95.38   96.60   95.99
+  ARGM-PRD       93     241     323    27.84   22.36   24.80
+  ARGM-TMP     5255     923     745    85.06   87.58   86.30
+    R-ARG0      916      75      86    92.43   91.42   91.92
+    R-ARG1      636     100      78    86.41   89.08   87.72
+    R-ARG2       42      10      15    80.77   73.68   77.06
+    R-ARG3        3       3       4    50.00   42.86   46.15
+R-ARGM-CAU        1       3       2    25.00   33.33   28.57
+R-ARGM-LOC       66      33      23    66.67   74.16   70.21
+R-ARGM-MNR       12       4       2    75.00   85.71   80.00
+R-ARGM-TMP       54      18      22    75.00   71.05   72.97
+------------------------------------------------------------
+         V    34780       0       1   100.00  100.00  100.00
+------------------------------------------------------------
+--------------------------------------------------------------------
+              corr.  excess  missed    prec.    rec.      F1    lAcc
+ Unlabeled    72348    7620    6880    90.47   91.32   90.89   95.33
+--------------------------------------------------------------------
+```
+
 ### Annotation benefits of SRL
+
+One additional benefit of SRL and SRL-adjacent formalisms is the research coming from the University of Washington/Bar-Illan University on how to annotate this data efficiently. The overall idea is to use natural language questions (mostly from templates) to extract argument spans for particular roles. This abstracts away the linguistic knowledge required to annotate this data, but also, from a more practical point of view, makes it easy to modify the label space of annotations by changing the question templates. The QA-SRL project has a [website](http://qasrl.org/) with a nice browser to look at the freely available data.
+
+- [Question-Answer Driven Semantic Role Labeling: Using Natural Language to Annotate Natural Language](https://www.aclweb.org/anthology/D15-1076/)
+- [Large Scale QA SRL Parsing](https://arxiv.org/abs/1805.05377)
+- [Crowdsourcing Question-Answer Meaning Representations](https://www.aclweb.org/anthology/N18-2089/)
+
+
+
+## Conclusion
+
