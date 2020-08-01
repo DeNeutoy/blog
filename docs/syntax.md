@@ -44,10 +44,9 @@ where it becomes clear that really, these entities are actually associated with 
 
 
 
-
 ## The underlying model
 
-Why is viewing these types of structured prediction task in this way so useful? To think about this, it is useful to consider the inputs and outputs of these classifiers:
+Why is viewing these types of structured prediction task in this way so useful? To think about this, it is helpful to consider the inputs and outputs of these classifiers:
 
 - Text Classification: Input: (Text) -> Label/s
 - Named Entity Recognition: Input: (Text) -> Labelled Spans
@@ -60,7 +59,7 @@ This small extension allows models which are much more expressive for *zero* cos
 
 ### What is Semantic Role Labelling?
 
-Semantic role labelling is commonly used to describe "events" in natural language, which are normally focused around a verb (but sometimes also nouns) and it's arguments. These arguments also have thematic roles, such as "Agent" or "Instrument".
+Semantic role labelling is one framework to describe "events" in natural language, which are normally focused around a verb (but sometimes also nouns) and it's arguments. These arguments also have thematic roles, such as "Agent" or "Instrument".
 
 One commonly used dataset for semantic role labelling is Onotnotes 5, which is annotated using the Propbank schema. Propbank defines arguments for each individual verb, and a set of general purpose modifier labels which can describe alterations/additions to the main event, such as `Purpose`, `Negation`, `Temporal` and several more.
 
@@ -132,7 +131,7 @@ R-ARGM-TMP       55      26      21    67.90   72.37   70.06
 
 One immediate take away from this table is this stat: `Percentage of perfect props :  70.50`. This means that 70% of the sentences parsed by the model have *exactly* correct argument and modifier spans for *all* verbs. Given how diverse Ontonotes is in terms of domains (it spans news, biblical text, conversations, magazine articles etc), this is really quite good! Additionally, the per-span and full sentence F1 scores are substantially closer together than for dependency parsing.
 
-One reason for this is that SRL simply has fewer annotations, so these scores are closer, meaning there are less predictions to get correct in any given sentence. However, this doesn't completely explain the difference; syntax has many trivially predictable arcs and labels, such as `punct` and `det`. I suspect this difference is also infuenced by the granularity of the annotation, making it harder to annotate consistently (not to mention that the annotation requires experts).
+One reason for this is that SRL simply has fewer annotations, because it annotates spans and not individual words, so these scores are closer; this means there are less predictions to get correct in any given sentence. However, this doesn't completely explain the difference; syntax has many trivially predictable arcs and labels, such as `punct` and `det`. I suspect this difference is also infuenced by the granularity of the annotation, making it harder to annotate consistently (not to mention that the annotation requires experts).
 
 ### The problems with Ontonotes 5.0 annotations
 
@@ -163,7 +162,7 @@ Here are the annotation guidelines for the Discourse Argument Modifier:
     Mary reads novels’). Often, but not always, when these elements connect the annotation instance
     to a previous sentence, they occur at the beginning of the instance.
 
-This raises several questions - why are we predicting something that doesn't change the semantics of the sentence at all, and secondly, how do we decide which verb in the sentence it should be a modifier for? Sometimes identifying the _main_ event in a sentence is non-trivial.
+This raises several questions - why are we predicting something that doesn't change the semantics of the sentence at all, and secondly, how do we decide which verb in the sentence it should be a modifier for? Sometimes identifying the _main_ event in a sentence is non-trivial. These discourse annotations are not consistently attached to, e.g the first or last verb in the sentence, and contain arbitrary annotation decisions which damage a model's ability to learn to predict them.
 
 #### Argument Continuation
 
@@ -176,110 +175,169 @@ Ontonotes 5.0 annotates argument continuation, for cases where a predicate's arg
 
 ```
 
-This annotation is implemented in a very hacky way in Onotonotes - the label is just prepended with a `C-` to mark it as being continued, and people typically just add it as another label in their model. This is quite gross, both from an annotation and a modelling point of view - but at least the evaluation script merges continued arguments before scoring, so they are at least correctly evaluated.
+This annotation is implemented in a very "hacky" way in Onotonotes - the label is just prepended with a `C-` to mark it as being continued, and people typically just add it as another label in their model. This is quite gross, both from an annotation and a modelling point of view - but at least the evaluation script merges continued arguments before scoring, so they are at least correctly evaluated.
 
 For the core arguments, this type of continuation is not too uncommon, but are vanishingly rare for argument modifiers. Here are the span counts in the training and development splits of Ontonotes 5.0:
 
 ```text
-Arg         Train Dev
+Arg         Train   Dev
 # Core Arguments
-C-ARG0      182   33
-C-ARG1      2230  329
-C-ARG2      183   24
-C-ARG3      9     1
-C-ARG4      16    1
-C-ARG5      0     0
-C-ARGA      0     0
+C-ARG0      182     33
+C-ARG1      2230    329
+C-ARG2      183     24
+C-ARG3      9       1
+C-ARG4      16      1
+C-ARG5      0       0
+C-ARGA      0       0
 
 # Modifiers
-C-ARGM-MNR  24  8
-C-ARGM-ADV  17  2
-C-ARGM-EXT  14  1
-C-ARGM-TMP  12  1
-C-ARGM-LOC  9   0
-C-ARGM-DSP  2   0
-C-ARGM-CAU  2   0
-C-ARGM-PRP  1   0
-C-ARGM-MOD  1   0
-C-ARGM-ADJ  1   0
-C-ARGM-DIS  1   0  
-C-ARGM-NEG  1   0
-C-ARGM-COM  1   0
-C-ARGM-DIR  1   0
+C-ARGM-MNR  24      8
+C-ARGM-ADV  17      2
+C-ARGM-EXT  14      1
+C-ARGM-TMP  12      1
+C-ARGM-LOC  9       0
+C-ARGM-DSP  2       0
+C-ARGM-CAU  2       0
+C-ARGM-PRP  1       0
+C-ARGM-MOD  1       0
+C-ARGM-ADJ  1       0
+C-ARGM-DIS  1       0  
+C-ARGM-NEG  1       0
+C-ARGM-COM  1       0
+C-ARGM-DIR  1       0
 ```
 
 Taking a look at some of the occurences of modifier continuation in Ontonotes, it is either incorrect annotations, or very complex conditional statements within the modifier, such as "X happened either before Y, or after thing Z, but not both". In this case it seems to make sense to me to annotate these as separate modifiers - you could detect the presence of ambiguity for a given modifier just by seeing if a particular verb has multiple modifiers of the same type or not.
 
 #### Argument Reference
 
+The second complexity for argument span annotation in Ontonotes is argument reference. Argument reference occurs when arguments to a verb are referenced (duh), such as:
+
+`[The keys ARG1], [which R-ARG1] were [needed V] [to access the car ARGM-PURPOSE], were locked inside the house.`
+
+This reference commonly occurs in cases where you would use words such as "that", "who", "they", "which" to refer to an object or person (relative pronouns). A slightly more complicated type of reference which is a bit more interesting occurs when there is a forward reference to an argument which occurs later on, such as:
+
+`[Anticipated for 20 years R-ARG1], [today ARGM-TEMPORAL], [this dream ARG1] is [coming V] [true ARG2].`
+
+However, this type of reference is quite rare, compared to the relative pronoun case which happens very frequently. We can see this by looking at how often the different Ontonotes labels are referred to, below:
+
+```text
+Arg         Train   Dev
+
+R-ARG0      7307    1002
+R-ARG1      5489    715
+R-ARG2      400     57
+R-ARG3      44      7
+R-ARG4      10      2
+R-ARG5      1       0
+
+R-ARGM-TMP  494     76
+R-ARGM-LOC  682     89
+R-ARGM-CAU  39      2
+R-ARGM-DIR  11      1
+R-ARGM-ADV  14      3
+R-ARGM-MNR  75      14
+R-ARGM-PRD  1       0
+R-ARGM-COM  3       0
+R-ARGM-PRP  5       1
+R-ARGM-GOL  4       0
+R-ARGM-EXT  5       2
+R-ARGM-MOD  1       0
+
+```
+
+Again, we see that there is a long tail of argument reference, roughly corresponding to whether the argument is typically used to refer to something concrete. In particular, it's vanishingly rare that these argument reference anotations add a huge amount to the understanding of a particular verb's arguments, because in every case that an argument's reference is annotated, **the argument is also annotated**. 
+
 
 #### Purpose, Cause and Purpose Not Cause Argument Modifiers
 
+The final discrepancy I picked up on when looking at a confusion matrix of the BERT-based SRL model's output is that Ontonotes 5.0 contains Purpose, Cause **and** Purpose Not Cause labels. This is likely a hangover from different versions of the Propbank schema being used to annotate different versions of Ontonotes, because [this (original?) version](https://verbs.colorado.edu/~mpalmer/projects/ace/PBguidelines.pdf) of the schema contains only _Cause (CAU)_ and _Purpose Not Cause (PNC)_ argument modifiers, but [version 3.0 from 2010](http://clear.colorado.edu/compsem/documents/propbank_guidelines.pdf) contains only _Cause (CAU)_ and _Purpose (PRP)_ modifiers. However, the fact that all 3 are present is problematic, because it will cause any model to be unsure of whether to assign _PNC_ or _PRP_ as a label. Not to mention the frequent ambiguity purpose and cause in the first place - the line of causation in event semantics is quite blury.
 
-#### 
+In order to temporarily fix this problem, I took the relatively nuclear approach of fusing all of these argument modifiers in to a single one. _ducks for cover_
 
-- Continuation/Reference
-- Ext
 
 ### Simple SRL
 
-I don't have the details of this completely finalised yet, but here is an SRL model with some alterations to the label space, taking into consideration the above points.
+I don't have the details of this completely finalised yet, but here is an SRL model with the following alterations to the label space, taking into consideration the above points:
 
+- **Drop the Direct Speech Argument Modifer** (2 examples in entire of Ontonotes)
+- **Drop the Reciprocal Argument Modifier** (very uncommon, use unclear)
+- **Drop the Discourse Argument Modifier** (Common, but not useful, arbitrarily annotated)
+- **Drop all Argument Modifier continuations**
+- **Only allow Argument/Modifier reference for the core arguments and the CAUSE, LOCATION, MANNER, and TEMPORAL modifiers** (this was a bit arbitrary, but it was based on arguments that _are typically referenced_ based on the label distribution.)
+- **Merge the PURPOSE, CAUSE, GOAL and PURPOSE NOT CAUSE into a single CAUSE label** (if I did this again, I would merge the GOAL label with the DIRECTION label, beause they are more similar.)
+
+Modifying the label space in this way, we get results that look like this:
 
 ```text
-Number of Sentences    :       38375
-Number of Propositions :       34781
-Percentage of perfect props :  72.71
+Number of Sentences    :       36041
+Number of Propositions :       32449
+Percentage of perfect props :  73.67
 
               corr.  excess  missed    prec.    rec.      F1
 ------------------------------------------------------------
-   Overall    68971   10997   10257    86.25   87.05   86.65
+   Overall    62450    9728    8913    86.52   87.51   87.01
 ----------
-      ARG0    16422    1417    1216    92.06   93.11   92.58
-      ARG1    25402    3220    2827    88.75   89.99   89.36
-      ARG2     8067    1400    1463    85.21   84.65   84.93
-      ARG3      499     189     177    72.53   73.82   73.17
-      ARG4      466     125     117    78.85   79.93   79.39
+      ARG0    15206    1222    1034    92.56   93.63   93.09
+      ARG1    23644    2763    2412    89.54   90.74   90.14
+      ARG2     7515    1278    1328    85.47   84.98   85.22
+      ARG3      473     169     158    73.68   74.96   74.31
+      ARG4      445     111     105    80.04   80.91   80.47
       ARG5        9       3       7    75.00   56.25   64.29
   ARGM-ADJ      164     100      90    62.12   64.57   63.32
-  ARGM-ADV     2074    1108    1094    65.18   65.47   65.32
-  ARGM-CAU      951     405     339    70.13   73.72   71.88
-  ARGM-COM       21      28      13    42.86   61.76   50.60
-  ARGM-DIR      353     184     196    65.74   64.30   65.01
-  ARGM-EXT      154     129     119    54.42   56.41   55.40
-  ARGM-LOC     1556     603     621    72.07   71.47   71.77
-  ARGM-LVB       48      10       7    82.76   87.27   84.96
-  ARGM-MNR     1429     537     564    72.69   71.70   72.19
-  ARGM-MOD     2770      56      54    98.02   98.09   98.05
-  ARGM-NEG     1508      73      53    95.38   96.60   95.99
-  ARGM-PRD       93     241     323    27.84   22.36   24.80
-  ARGM-TMP     5255     923     745    85.06   87.58   86.30
-    R-ARG0      916      75      86    92.43   91.42   91.92
-    R-ARG1      636     100      78    86.41   89.08   87.72
-    R-ARG2       42      10      15    80.77   73.68   77.06
-    R-ARG3        3       3       4    50.00   42.86   46.15
-R-ARGM-CAU        1       3       2    25.00   33.33   28.57
-R-ARGM-LOC       66      33      23    66.67   74.16   70.21
-R-ARGM-MNR       12       4       2    75.00   85.71   80.00
-R-ARGM-TMP       54      18      22    75.00   71.05   72.97
+  ARGM-ADV     1978    1033    1035    65.69   65.65   65.67
+  ARGM-CAU      897     370     318    70.80   73.83   72.28
+  ARGM-COM       18      25      13    41.86   58.06   48.65
+  ARGM-DIR      335     168     180    66.60   65.05   65.82
+  ARGM-EXT      151     112     112    57.41   57.41   57.41
+  ARGM-LOC     1361     536     544    71.74   71.44   71.59
+  ARGM-LVB       47      10       7    82.46   87.04   84.68
+  ARGM-MNR     1332     493     513    72.99   72.20   72.59
+  ARGM-MOD     2547      51      50    98.04   98.07   98.06
+  ARGM-NEG     1406      71      49    95.19   96.63   95.91
+  ARGM-PRD       90     213     299    29.70   23.14   26.01
+  ARGM-TMP     4832     825     659    85.42   88.00   86.69
+    R-ARG0        0      48       0     0.00    0.00    0.00
+    R-ARG1        0      74       0     0.00    0.00    0.00
+    R-ARG2        0       4       0     0.00    0.00    0.00
+    R-ARG3        0       1       0     0.00    0.00    0.00
+R-ARGM-CAU        0       3       0     0.00    0.00    0.00
+R-ARGM-LOC        0      27       0     0.00    0.00    0.00
+R-ARGM-MNR        0       1       0     0.00    0.00    0.00
+R-ARGM-TMP        0      17       0     0.00    0.00    0.00
 ------------------------------------------------------------
-         V    34780       0       1   100.00  100.00  100.00
+         V    32448       0       1   100.00  100.00  100.00
 ------------------------------------------------------------
 --------------------------------------------------------------------
               corr.  excess  missed    prec.    rec.      F1    lAcc
- Unlabeled    72348    7620    6880    90.47   91.32   90.89   95.33
+ Unlabeled    65435    6743    5928    90.66   91.69   91.17   95.44
 --------------------------------------------------------------------
 ```
 
+and volia! Our overall performance has improved. But there are several interesting things to note here, the first being that as our F1 score has increased by 2.44, the percentage of perfect props has increased by 3.17%, suggesting that many of our corrections have contributed to fixing the last incorrectly predicted span in a particular sentence in the dev set. This is quite encouraging! Another thing to note is the unlabelled span F1 has increased by 1%, indicating that the spans we completely removed were also hard to predict - it wasn't just identifying the labels for those spans that was difficult.
+
+Finally, to place this improvement in the context of modelling, a 3% performance increase is similar to the modelling contributions between 2008 and 2017 (admittedly this is measuring on CONLL 2005, a different SRL dataset), and slightly more than the increase given from incorporating BERT representations into the SRL model. Quite nice! The takeaway here is to _look at the data_ and to make sure you're actually interested in what you are modelling.
+
+
 ### Annotation benefits of SRL
 
-One additional benefit of SRL and SRL-adjacent formalisms is the research coming from the University of Washington/Bar-Illan University on how to annotate this data efficiently. The overall idea is to use natural language questions (mostly from templates) to extract argument spans for particular roles. This abstracts away the linguistic knowledge required to annotate this data, but also, from a more practical point of view, makes it easy to modify the label space of annotations by changing the question templates. The QA-SRL project has a [website](http://qasrl.org/) with a nice browser to look at the freely available data.
+One additional benefit of SRL and SRL - adjacent formalisms is the research coming from the University of Washington/Bar-Illan University on how to annotate this data efficiently. The overall idea is to use natural language questions (mostly from templates) to extract argument spans for particular roles. This abstracts away the linguistic knowledge required to annotate this data, but also, from a more practical point of view, makes it easy to modify the label space of annotations by changing the question templates. The QA-SRL project has a [website](http://qasrl.org/) with a nice browser to look at the freely available data.
 
 - [Question-Answer Driven Semantic Role Labeling: Using Natural Language to Annotate Natural Language](https://www.aclweb.org/anthology/D15-1076/)
 - [Large Scale QA SRL Parsing](https://arxiv.org/abs/1805.05377)
 - [Crowdsourcing Question-Answer Meaning Representations](https://www.aclweb.org/anthology/N18-2089/)
 
 
+One under explored aspect of QA-SRL in my opinion is the natural way it can  be used to collect annotations in an online fashion, in an actual application. For example, the schema for questions in the trading example above could be something as simple as:
+
+- What is the price of this bond?
+- What quantity of the bond is requested?
+- Is this bond being offered or sold?
+
+This might seem obvious (converting the labels to questions), but really the step forward here is recognising that creating annotations to train an _effective_ NLP model for predicting this content requires you to view it as Almost Semantic Role Labelling and **not** NER.
 
 ## Conclusion
 
+Overall, I hope this post spelled out a couple of ways that we might be underestimating the performance of semantic role labelling models because of linguistically fiddly details that we can ignore in practice, as well as some labels which don't really make sense. Overall in NLP there is a huge focus on the models we train on these large, carefully annotated datasets, and not a huge amount of introspection on the datasets themselves, particularly in terms of correcting or modifying label schemas or annotation frameworks. 
+
+If you have feedback, let me know on [Twitter](https://twitter.com/MarkNeumannnn)!
