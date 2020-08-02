@@ -1,7 +1,7 @@
 
 This post explores a relatively bold hypothesis - that the applied natural language processing community has accidentally drifted into ascribing value to models for syntax, because they are popular in academia, whereas in reality, they are completely inappropriate for creating effective natural language understanding applications. 
 
-Given how bold this statement is, I want to start with a disclaimer - this post is specifically focused on _applied NLP_ and is not a comment on the value of studying syntax in language. I am also not talking about what serious linguists would call _applied NLP Research_ - e.g question answering, or summarisation. 
+Given how bold this statement is, I want to start with a disclaimer - this post is specifically focused on _applied NLP_ and is not a comment on the value of studying syntax in language. I am also not talking about what serious linguists would call _applied NLP Research_ - i.e publishable in ACL or EMNLP.
 
 
 ### Reason 1: Universal Dependencies
@@ -16,7 +16,23 @@ Overall, I feel like this metric causes an over-estimation of the performance of
 
 ## A Quick Foray into Applied NLP tasks
 
-I am a big fan of Ines Montani/Matthew Honnibal's approach to thinking about practical NLP annotation, which you can listen to in [this easily digestable video](https://www.youtube.com/watch?v=JpkzK58lkmA) from Ines. Basically, the idea is that there are very few tasks which can't be broken down into text classification and/or Named Entity Recognition when used in a practical setting. However, over the last few years, I have come across several examples of an "intermediate" task format, which I am going to call _Almost Semantic Role Labelling_. This naming will probably make lots of NLP researchers stamp their feet and tell me that I mean "arbitrary structured prediction", which is probably true - but we'll stick with _Almost Semantic Role Labelling_ for the time being, given it's the most similar.
+I am a big fan of Ines Montani/Matthew Honnibal's approach to thinking about practical NLP annotation, which you can listen to in [this easily digestable video](https://www.youtube.com/watch?v=JpkzK58lkmA) from Ines. Basically, the idea is that there are very few tasks which can't be broken down into text classification and/or Named Entity Recognition when used in a practical setting. 
+
+However, over the last few years, I have come across several examples of an "extension" task format, which I am going to call _Almost Semantic Role Labelling_. This naming will probably make lots of NLP researchers stamp their feet and tell me that I mean "arbitrary structured prediction", which is probably true - but we'll stick with _Almost Semantic Role Labelling_ for the time being, given it's the most similar. It turns out that Almost Semantic Role Labelling is constrained in a particular way which makes it very easy to buid models for, which is important for practical use.
+
+
+TODO add in model explanation
+
+### The underlying model
+
+Why is viewing these types of structured prediction task in this way so useful? To think about this, it is helpful to consider the inputs and outputs of these classifiers:
+
+- Text Classification: Input: (Text) -> Label/s
+- Named Entity Recognition: Input: (Text) -> Labelled Spans
+- Almost Semantic Role Labelling: (Text, index) -> Labelled Spans
+
+This small extension allows models which are much more expressive for *zero* cost, due to a cute trick which allows us to view Almost Semantic Role Labelling in exactly the same way as NER which I have demonstrated in this extremely scientific drawing:
+
 
 #### Example 1: Bond Trading
 _(This is a real life example which I helped someone with a bit a year or so ago.)_
@@ -40,22 +56,24 @@ and [30M QUANTITY] [BMW'30s BOND].
 where it becomes clear that really, these entities are actually associated with a particular bond, rather than being individual entities. In this case, an _Almost Semantic Role Labelling_ model would work by viewing the price, quantity and dates as arguments to a particular bond. As the bonds have a very particular structure (market abbreviation, %, date), these can be extracted using a regex with high precision, similar to how verbs can be identified using a part of speech tagger in semantic role labelling. 
 
 
-#### Example 2: Slot Filling
+#### Example 2: Slot Filling/Intent Recognition
 
+Almost Semantic Role Labelling allows us to handle some of the more complicated cases in Slot Filling quite naturally. Typically, slot filling is framed as NER, because usually only one "event frame" is expressed per sentence. However, there are many quite natural cases where multiple events can be expressed within one sentence, such as:
 
+```
+Show me the flights between New York and Boston on the 3rd Aug and the trains from Boston to Miami on the 15th.
+```
 
-## The underlying model
+Suddenly, just by adding a conjunction, this sentence is difficult to parse into events using NER, because we don't know which slots go with which events. 
 
-Why is viewing these types of structured prediction task in this way so useful? To think about this, it is helpful to consider the inputs and outputs of these classifiers:
+```
+Show me the [flights TRANSPORT] [between V] [New York SOURCE] and [Boston DESTINATION] on the [3rd Aug DATE] and the trains from Boston to Miami on the 15th.
+Show me the flights between New York and Boston on the 3rd Aug and the [trains TRANSPORT] [from V] [Boston SOURCE] to [Miami DESTINATION] on the [15th DATE].
+```
 
-- Text Classification: Input: (Text) -> Label/s
-- Named Entity Recognition: Input: (Text) -> Labelled Spans
-- Almost Semantic Role Labelling: (Text, index) -> Labelled Spans
+## Semantic Role Labelling
 
-This small extension allows models which are much more expressive for *zero* cost, due to a cute trick which allows us to view Almost Semantic Role Labelling in exactly the same way as NER which I have demonstrated in this extremely scientific drawing:
-
-## An alternative: Semantic Role Labelling
-
+Given i've been waxing lyrical about the benefits of viewing some structured prediction problems as almost semantic role labelling, let's take a look at what the real deal actually is.
 
 ### What is Semantic Role Labelling?
 
@@ -314,7 +332,7 @@ R-ARGM-TMP        0      17       0     0.00    0.00    0.00
 --------------------------------------------------------------------
 ```
 
-and volia! Our overall performance has improved. But there are several interesting things to note here, the first being that as our F1 score has increased by 2.44, the percentage of perfect props has increased by 3.17%, suggesting that many of our corrections have contributed to fixing the last incorrectly predicted span in a particular sentence in the dev set. This is quite encouraging! Another thing to note is the unlabelled span F1 has increased by 1%, indicating that the spans we completely removed were also hard to predict - it wasn't just identifying the labels for those spans that was difficult.
+and volia! Our overall performance has improved (unsurprisingly). But there are several interesting things to note here, the first being that as our F1 score has increased by 2.44, the percentage of perfect props has increased by 3.17%, suggesting that many of our corrections have contributed to fixing the last incorrectly predicted span in a particular sentence in the dev set. This is quite encouraging! Another thing to note is the unlabelled span F1 has increased by 1%, indicating that the spans we completely removed were also hard to predict - it wasn't just identifying the labels for those spans that was difficult.
 
 Finally, to place this improvement in the context of modelling, a 3% performance increase is similar to the modelling contributions between 2008 and 2017 (admittedly this is measuring on CONLL 2005, a different SRL dataset), and slightly more than the increase given from incorporating BERT representations into the SRL model. Quite nice! The takeaway here is to _look at the data_ and to make sure you're actually interested in what you are modelling.
 
@@ -338,6 +356,6 @@ This might seem obvious (converting the labels to questions), but really the ste
 
 ## Conclusion
 
-Overall, I hope this post spelled out a couple of ways that we might be underestimating the performance of semantic role labelling models because of linguistically fiddly details that we can ignore in practice, as well as some labels which don't really make sense. Overall in NLP there is a huge focus on the models we train on these large, carefully annotated datasets, and not a huge amount of introspection on the datasets themselves, particularly in terms of correcting or modifying label schemas or annotation frameworks. 
+Overall, I hope this post spelled out a couple of ways that we might be underestimating the performance of semantic role labelling models because of linguistically fiddly details that we can ignore in practice, as well as some labels which don't really make sense. In the NLP research community currently, there is a huge focus on the models we train on these large, carefully annotated datasets, and not a huge amount of introspection on the datasets themselves, particularly in terms of correcting or modifying label schemas or annotation frameworks. 
 
 If you have feedback, let me know on [Twitter](https://twitter.com/MarkNeumannnn)!
