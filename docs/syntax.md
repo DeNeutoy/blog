@@ -1,17 +1,28 @@
 
-This post explores a relatively bold hypothesis - that the applied natural language processing community has accidentally drifted into ascribing value to models for syntax, because they are popular in academia, whereas in reality, they are completely inappropriate for creating effective natural language understanding applications. 
+This post explores natural langugage processing models for applied NLP. In particular, it digs into a particular model for Semantic Role Labeling, discussing some ways in which I think it can be applied in practice. After that, it goes off on a bit of a tangent, with some exploration of what we should care about within SRL as a formalism and some very crude ways to fix them, resulting in a nice improvement to an existing SRL model.
 
-Given how bold this statement is, I want to start with a disclaimer - this post is specifically focused on _applied NLP_ and is not a comment on the value of studying syntax in language. I am also not talking about what serious linguists would call _applied NLP Research_ - i.e publishable in ACL or EMNLP.
+Some of the ideas in this post point to a relatively bold hypothesis - that the applied natural language processing community has accidentally drifted into producing models for syntax, because they are popular in academia, whereas in reality, they are not the best choice for creating effective natural language understanding applications. 
 
+### Why Syntax?
 
-### Reason 1: Universal Dependencies
-The [Universal Dependencies](https://universaldependencies.org/) project is probably the largest annotation effort in NLP. It really has a lot going for it - it's open source and (broadly) very liberally licensed. It has a huge number of treebanks in many different domains for over 90 languages, and it's backed by rigerous linguistic theory that has stood the test of time. 
+Models for syntactic analysis have a lot going for them. Syntax is a large area of ongoing research; models built for syntax often operate over trees, which are efficient; and many open source libraries provide models in a wide variety of languages. The [Universal Dependencies](https://universaldependencies.org/) project is probably the largest annotation effort in NLP. It really has a lot going for it - it's open source and (broadly) very liberally licensed. It has a huge number of treebanks in many different domains for over 90 languages, and it's backed by rigorous linguistic theory that has stood the test of time. 
 
+#### Why _not_ Syntax?
+Using models for syntax in practice do raise some problems however. The most common one is the variation of syntactic constructions for the same event. For example, all of these statements have very different syntactic constructions:
 
-### Reason 2: The con of Labelled Attachement Score
-The most common evaluation metrics for dependency parsing are Labelled and Unlabelled Attachment Score, which measure the accuracy of attachement decisions in a dependency tree (with labelled additionally considering the label of the dependency arc). It has always struck me as quite bizzare why this evaluation is accepted in the research community, given the standards of evaluation in other common NLP tasks such as NER. Clearly, there is a precision vs recall tradeoff in the attachment decisions made by a dependency parsing model. To find really good analysis on this point, we have to go back quite some way to [Analyzing and Integrating Dependency Parsers](https://www.aclweb.org/anthology/J11-1007.pdf) by Ryan McDonald and Joakim Nivre. 
+```text
+Bill Gates is the cofounder of Microsoft
+The cofounder of Microsoft, Bill gates, ...
+Microsoft's cofounder, Bill Gates, said today ...
+Bill Gates, the cofounder of Microsoft, said ...
+Bill Gates, Microsoft cofounder, said today ...
+```
 
-Overall, I believe this metric causes an over-estimation of the performance of most dependency parsers. For example, the Stack Pointer Parser from [Ma and Hovy, 2018](https://arxiv.org/pdf/1805.01087.pdf) achieves 96.12% UAS on the Penn Treebank - but when viewed at the sentence level (all dependencies completely correct), this corresponds to only 62% unlabelled accuracy (and 55% for LAS!). Obviously this drop in performance is expected, but this relates to a slightly more cogent point below, when we look at this gap relative to another task.
+I hope that it is reasonable to say that most applied NLP tasks focus on semantic relations (e.g co-founder of) and so this syntactic variablity makes using syntax as a core building block hard to swallow.
+
+Another less commonly discussed problem with dependency parsing is how they are evaluated. Labeled and Unlabeled Attachment Score measure the accuracy of attachement decisions in a dependency tree (with labeled additionally considering the label of the dependency arc). It has always struck me as quite bizzare why this evaluation is accepted in the research community, given the standards of evaluation in other common NLP tasks such as NER. Clearly, there is a precision vs recall tradeoff in the attachment decisions made by a dependency parsing model, but this is rarely reported. To find really good analysis on this point, we have to go back quite some way to [Analyzing and Integrating Dependency Parsers](https://www.aclweb.org/anthology/J11-1007.pdf) by Ryan McDonald and Joakim Nivre. 
+
+Overall, I believe this metric causes an over-estimation of the performance of most dependency parsers for _practitioners_. For example, the Stack Pointer Parser from [Ma and Hovy, 2018](https://arxiv.org/pdf/1805.01087.pdf) achieves 96.12% UAS on the Penn Treebank - but when viewed at the sentence level (all dependencies completely correct), this corresponds to only 62% unlabeled accuracy (and 55% for LAS!). Obviously this drop in performance is expected, but this relates to a slightly more cogent point below, when we look at this gap relative to another task.
 
 
 ## A Quick Foray into Applied NLP tasks
@@ -22,25 +33,25 @@ A good example of this is Relation Extraction, a very popualar task in industry.
 
 ### A wild task format appears!
 
-However, over the last few years, I have come across several examples of tasks which are slightly more complex than this combination of text classification and NER, which I am going to call _Almost Semantic Role Labelling_. This task can be broadly described as **span prediction conditioned on a word or phrase in the sentence**.
+Over the last few years, I have come across several examples of tasks which are slightly more complex than this combination of text classification and NER, which I am going to call _Almost Semantic Role Labeling_. This task can be broadly described as **span prediction conditioned on a word or phrase in the sentence**.
 
-This naming will probably make lots of NLP researchers stamp their feet and tell me that I mean "close to arbitrary structured prediction", which is probably true - but we'll stick with _Almost Semantic Role Labelling_ for the time being, given it's the most similar. It turns out that Almost Semantic Role Labelling is constrained in a particular way which makes it very easy to buid models for, which is important for practical use.
+This naming will probably make lots of NLP researchers stamp their feet and tell me that I mean "close to arbitrary structured prediction", which is probably true - but we'll stick with _Almost Semantic Role Labeling_ for the time being, given it's the most similar. It turns out that Almost Semantic Role Labeling is constrained in a particular way which makes it very easy to buid models for, which is important for practical use.
 
 ### The underlying model
 
 Why is viewing these types of structured prediction task in this way so useful? To think about this, it is helpful to consider the inputs and outputs of these classifiers:
 
 - Text Classification: Input: (Text) -> Label/s
-- Named Entity Recognition: Input: (Text) -> Labelled Spans
-- Almost Semantic Role Labelling: (Text, text index) -> Labelled Spans
+- Named Entity Recognition: Input: (Text) -> Labeled Spans
+- Almost Semantic Role Labeling: (Text, text index) -> Labeled Spans
 
-This small extension allows models which are much more expressive for *zero* modelling cost, due to a cute trick which allows us to view Almost Semantic Role Labelling in exactly the same way as NER. From a modelling perspective, doing something as simple as concatenating the word index onto the representations for the rest of the words in the sentence actually works! Here is a very scientific drawing of this idea:
+This small extension allows models which are much more expressive for *zero* modelling cost, due to a cute trick which allows us to view Almost Semantic Role Labeling in exactly the same way as NER. From a modelling perspective, doing something as simple as concatenating the word index onto the representations for the rest of the words in the sentence actually works! Here is a very scientific drawing of this idea:
 
 ![model architecture sketch](./img/almost_srl/almost_srl.png)
 
 These models are also fast, because they can process multiple sentence indices at once (i.e batched). 
 
-In summary, models for Almost Semantic Role Labelling have the following benefits:
+In summary, models for Almost Semantic Role Labeling have the following benefits:
 
 - Little added modelling complexity
 - Ability to extract arbitrary numbers of events/relations/frames per sentence
@@ -66,12 +77,12 @@ I can pay [100 PRICE], [200 PRICE], and [300 PRICE] for
 [10M QUANTITY] [BMW 10s BOND], [20M QUANTITY] [BMW 4 01/20 BOND]
 and [30M QUANTITY] [BMW'30s BOND]. 
 ```
-where it becomes clear that really, these entities are actually associated with a particular bond, rather than being individual entities. In this case, an _Almost Semantic Role Labelling_ model would work by viewing the price, quantity and dates as arguments to a particular bond. As the bonds have a very particular structure (market abbreviation, %, date), these can be extracted using a regex with high precision, similar to how verbs can be identified using a part of speech tagger in semantic role labelling. 
+where it becomes clear that really, these entities are actually associated with a particular bond, rather than being individual entities. In this case, an _Almost Semantic Role Labeling_ model would work by viewing the price, quantity and dates as arguments to a particular bond. As the bonds have a very particular structure (market abbreviation, %, date), these can be extracted using a regex with high precision, similar to how verbs can be identified using a part of speech tagger in semantic role labeling. 
 
 
 #### Example 2: Slot Filling/Intent Recognition
 
-Almost Semantic Role Labelling allows us to handle some of the more complicated cases in Slot Filling quite naturally. Typically, slot filling is framed as NER, because usually only one "event frame" is expressed per sentence. However, there are many quite natural cases where multiple events can be expressed within one sentence, such as:
+Almost Semantic Role Labeling allows us to handle some of the more complicated cases in Slot Filling quite naturally. Typically, slot filling is framed as NER, because usually only one "event frame" is expressed per sentence. However, there are many quite natural cases where multiple events can be expressed within one sentence, such as:
 
 ```
 Show me the flights between New York and Boston on the 3rd Aug and the trains from Boston to Miami on the 15th.
@@ -89,22 +100,22 @@ Show me the flights between New York and Boston on the 3rd Aug and the [trains T
 Do you have another example of a task which fits this format? [This blog is open source](https://github.com/DeNeutoy/blog), and written entirely in Markdown files, so it's easy to contribute.
 
 
-## Semantic Role Labelling
+## Semantic Role Labeling
 
-Given i've been waxing lyrical about the benefits of viewing some structured prediction problems as almost semantic role labelling, let's take a look at what the real deal actually is. I'll also go about chopping up and re-organising the labels for SRL into something that I think could be generally useful as a "base" model for people to build applications on top of.
+Given i've been waxing lyrical about the benefits of viewing some structured prediction problems as almost semantic role labeling, let's take a look at what the real deal actually is. I'll also go about chopping up and re-organising the labels for SRL into something that I think could be generally useful as a "base" model for people to build applications on top of.
 
-### What is Semantic Role Labelling?
+### What is Semantic Role Labeling?
 
-Semantic role labelling is one framework to describe "events" in natural language, which are normally focused around a verb (but sometimes also nouns) and it's arguments. These arguments also have thematic roles, such as "Agent" or "Instrument".
+Semantic role labeling is one framework to describe "events" in natural language, which are normally focused around a verb (but sometimes also nouns) and it's arguments. These arguments also have thematic roles, such as "Agent" or "Instrument".
 
-One commonly used dataset for semantic role labelling is Onotnotes 5, which is annotated using the [Propbank schema](https://propbank.github.io/). Propbank defines arguments for each individual verb, and a set of general purpose modifier labels which can describe alterations/additions to the main event, such as `Purpose`, `Negation`, `Temporal` and several more.
+One commonly used dataset for semantic role labeling is Onotnotes 5, which is annotated using the [Propbank schema](https://propbank.github.io/). Propbank defines arguments for each individual verb, and a set of general purpose modifier labels which can describe alterations/additions to the main event, such as `Purpose`, `Negation`, `Temporal` and several more.
 
-A common reduction of this task in the NLP community is to ignore that the argument definitions are specific to a given verb (i.e that ARG0 may have a different meaning for the verb "eat" than the verb "defibrillate"). In some sense this is a "poor man's" semantic role labelling, and at first glance it seems like such a crude hack would not work particularly well. However, in practice, the arguments for different verbs actually do tend to correlate; ARG0 typically represents the "Agent", or the person/thing doing something in the event, and ARG1 typically represents the "Experiencer". Because of these distributional similarities in predicate arguments in Propbank, this mangled version of SRL actually does carry some meaning, and as we are about to see, could be quite useful.
+A common reduction of this task in the NLP community is to ignore that the argument definitions are specific to a given verb (i.e that ARG0 may have a different meaning for the verb "eat" than the verb "defibrillate"). In some sense this is a "poor man's" semantic role labeling, and at first glance it seems like such a crude hack would not work particularly well. However, in practice, the arguments for different verbs actually do tend to correlate; ARG0 typically represents the "Agent", or the person/thing doing something in the event, and ARG1 typically represents the "Experiencer". Because of these distributional similarities in predicate arguments in Propbank, this mangled version of SRL actually does carry some meaning, and as we are about to see, can be quite useful.
 
 
 ### A Practical Analysis of a Bert-base SRL model
 
-Here is the performance of a fine-tuned bert-base model for semantic role labelling on Ononotes 5.0, the most commonly used semantic role labelling corpus:
+Let's take a closer look at a fine-tuned bert-base model for semantic role labeling on Ononotes 5.0, the most commonly used semantic role labeling corpus. This model is inspired by [Peng Shi and Jimmy Lin's paper](https://arxiv.org/abs/1904.05255), but is actually even simpler (it uses only a linear classifier on top of BERT represenations, and uses a cute trick to repurpose BERT's sentence type ids as verb indicators). The implementation we are looking at is one that I wrote for [AllenNLP](https://allennlp.org/) and is the current model in the [AllenNLP Demo](https://demo.allennlp.org/semantic-role-labeling). Here is the performance on the development set of Ontonotes 5:
 
 ```text
 Number of Sentences    :       38377
@@ -171,7 +182,7 @@ One reason for this is that SRL simply has fewer annotations, because it annotat
 
 ### The problems with Ontonotes 5.0 annotations
 
-If we are taking a practical approach to semantic role labelling, there are several modifications we can make to the Propbank schema to improve performance and remove things we don't care about.
+If we are taking a practical approach to semantic role labeling, there are several modifications we can make to the Propbank schema to improve performance and remove things we don't care about.
 
 #### Discourse Arguments
 
@@ -350,7 +361,7 @@ R-ARGM-TMP        0      17       0     0.00    0.00    0.00
 --------------------------------------------------------------------
 ```
 
-and volia! Our overall performance has improved (unsurprisingly). But there are several interesting things to note here, the first being that as our F1 score has increased by 2.44, the percentage of perfect props has increased by 3.17%, suggesting that many of our corrections have contributed to fixing the last incorrectly predicted span in a particular sentence in the dev set. This is quite encouraging! Another thing to note is the unlabelled span F1 has increased by 1%, indicating that the spans we completely removed were also hard to predict - it wasn't just identifying the labels for those spans that was difficult.
+and volia! Our overall performance has improved (unsurprisingly). But there are several interesting things to note here, the first being that as our F1 score has increased by 2.44, the percentage of perfect props has increased by 3.17%, suggesting that many of our corrections have contributed to fixing the last incorrectly predicted span in a particular sentence in the dev set. This is quite encouraging! Another thing to note is the unlabeled span F1 has increased by 1%, indicating that the spans we completely removed were also hard to predict - it wasn't just identifying the labels for those spans that was difficult.
 
 Finally, to place this improvement in the context of modelling, a 3% performance increase is similar to the modelling contributions between 2008 and 2017 (admittedly this is measuring on CONLL 2005, a different SRL dataset), and slightly more than the increase given from incorporating BERT representations into the SRL model. Quite nice! The takeaway here is to _look at the data_ and to make sure you're actually interested in what you are modelling.
 
@@ -370,10 +381,10 @@ One under explored aspect of QA-SRL in my opinion is the natural way it can  be 
 - What quantity of the bond is requested?
 - Is this bond being offered or sold?
 
-This might seem obvious (converting the labels to questions), but really the step forward here is recognising that creating annotations to train an _effective_ NLP model for predicting this content requires you to view it as Almost Semantic Role Labelling and **not** NER.
+This might seem obvious (converting the labels to questions), but really the step forward here is recognising that creating annotations to train an _effective_ NLP model for predicting this content requires you to view it as Almost Semantic Role Labeling and **not** NER.
 
 ## Conclusion
 
-Overall, I hope this post spelled out a couple of ways that we might be underestimating the performance of semantic role labelling models because of linguistically fiddly details that we can ignore in practice, as well as some labels which don't really make sense. In the NLP research community currently, there is a huge focus on the models we train on these large, carefully annotated datasets, and not a huge amount of introspection on the datasets themselves, particularly in terms of correcting or modifying label schemas or annotation frameworks. 
+Overall, I hope this post spelled out a couple of ways that we might be underestimating the performance of semantic role labeling models because of linguistically fiddly details that we can ignore in practice, as well as some labels which don't really make sense. In the NLP research community currently, there is a huge focus on the models we train on these large, carefully annotated datasets, and not a huge amount of introspection on the datasets themselves, particularly in terms of correcting or modifying label schemas or annotation frameworks. 
 
 If you have feedback, let me know on [Twitter](https://twitter.com/MarkNeumannnn)!
