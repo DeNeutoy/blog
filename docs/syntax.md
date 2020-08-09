@@ -47,7 +47,7 @@ Why is viewing these types of structured prediction task in this way so useful? 
 
 This small extension allows models which are much more expressive for *zero* modelling cost, due to a cute trick which allows us to view Almost Semantic Role Labeling in exactly the same way as NER. From a modelling perspective, doing something as simple as concatenating the word index onto the representations for the rest of the words in the sentence actually works! Here is a very scientific drawing of this idea:
 
-![model architecture sketch](./img/almost_srl/almost_srl.png)
+![model architecture sketch](./img/syntax/almost_srl.png)
 
 These models are also fast, because they can process multiple sentence indices at once (i.e batched). 
 
