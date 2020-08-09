@@ -11,17 +11,20 @@ The [Universal Dependencies](https://universaldependencies.org/) project is prob
 ### Reason 2: The con of Labelled Attachement Score
 The most common evaluation metrics for dependency parsing are Labelled and Unlabelled Attachment Score, which measure the accuracy of attachement decisions in a dependency tree (with labelled additionally considering the label of the dependency arc). It has always struck me as quite bizzare why this evaluation is accepted in the research community, given the standards of evaluation in other common NLP tasks such as NER. Clearly, there is a precision vs recall tradeoff in the attachment decisions made by a dependency parsing model. To find really good analysis on this point, we have to go back quite some way to [Analyzing and Integrating Dependency Parsers](https://www.aclweb.org/anthology/J11-1007.pdf) by Ryan McDonald and Joakim Nivre. 
 
-Overall, I feel like this metric causes an over-estimation of the performance of most dependency parsers. For example, the Stack Pointer Parser from [Ma and Hovy, 2018](https://arxiv.org/pdf/1805.01087.pdf) achieves 96.12% UAS on the Penn Treebank - but when viewed at the sentence level (all dependencies completely correct), this corresponds to only 62% accuracy (and 55% for LAS!). Obviously this drop in performance is expected, but this relates to a slightly more cogent point below, when we look at this gap relative to another task.
+Overall, I believe this metric causes an over-estimation of the performance of most dependency parsers. For example, the Stack Pointer Parser from [Ma and Hovy, 2018](https://arxiv.org/pdf/1805.01087.pdf) achieves 96.12% UAS on the Penn Treebank - but when viewed at the sentence level (all dependencies completely correct), this corresponds to only 62% unlabelled accuracy (and 55% for LAS!). Obviously this drop in performance is expected, but this relates to a slightly more cogent point below, when we look at this gap relative to another task.
 
 
 ## A Quick Foray into Applied NLP tasks
 
-I am a big fan of Ines Montani/Matthew Honnibal's approach to thinking about practical NLP annotation, which you can listen to in [this easily digestable video](https://www.youtube.com/watch?v=JpkzK58lkmA) from Ines. Basically, the idea is that there are very few tasks which can't be broken down into text classification and/or Named Entity Recognition when used in a practical setting. 
+I am a big fan of Ines Montani/Matthew Honnibal's approach to thinking about practical NLP annotation, which you can listen to in [this easily digestable video](https://www.youtube.com/watch?v=JpkzK58lkmA) from Ines. Basically, the idea is that there are very few tasks which can't be broken down into text classification and/or Named Entity Recognition when used in a practical setting.
 
-However, over the last few years, I have come across several examples of an "extension" task format, which I am going to call _Almost Semantic Role Labelling_. This naming will probably make lots of NLP researchers stamp their feet and tell me that I mean "arbitrary structured prediction", which is probably true - but we'll stick with _Almost Semantic Role Labelling_ for the time being, given it's the most similar. It turns out that Almost Semantic Role Labelling is constrained in a particular way which makes it very easy to buid models for, which is important for practical use.
+A good example of this is Relation Extraction, a very popualar task in industry. When thinking about an end user interface for relation extraction, you almost certainly want the relation in the context of a sentence a human can read anyway - so why not just do text classification? If we wanted to get fancy, we could also do Named Entity Recognition so a user could search for relation-containing sentences which contain particular entity types.
 
+### A wild task format appears!
 
-TODO add in model explanation
+However, over the last few years, I have come across several examples of tasks which are slightly more complex than this combination of text classification and NER, which I am going to call _Almost Semantic Role Labelling_. This task can be broadly described as **span prediction conditioned on a word or phrase in the sentence**.
+
+This naming will probably make lots of NLP researchers stamp their feet and tell me that I mean "close to arbitrary structured prediction", which is probably true - but we'll stick with _Almost Semantic Role Labelling_ for the time being, given it's the most similar. It turns out that Almost Semantic Role Labelling is constrained in a particular way which makes it very easy to buid models for, which is important for practical use.
 
 ### The underlying model
 
@@ -29,9 +32,19 @@ Why is viewing these types of structured prediction task in this way so useful? 
 
 - Text Classification: Input: (Text) -> Label/s
 - Named Entity Recognition: Input: (Text) -> Labelled Spans
-- Almost Semantic Role Labelling: (Text, index) -> Labelled Spans
+- Almost Semantic Role Labelling: (Text, text index) -> Labelled Spans
 
-This small extension allows models which are much more expressive for *zero* cost, due to a cute trick which allows us to view Almost Semantic Role Labelling in exactly the same way as NER which I have demonstrated in this extremely scientific drawing:
+This small extension allows models which are much more expressive for *zero* modelling cost, due to a cute trick which allows us to view Almost Semantic Role Labelling in exactly the same way as NER. From a modelling perspective, doing something as simple as concatenating the word index onto the representations for the rest of the words in the sentence actually works! Here is a very scientific drawing of this idea:
+
+![model architecture sketch](./img/almost_srl/almost_srl.png)
+
+These models are also fast, because they can process multiple sentence indices at once (i.e batched). 
+
+In summary, models for Almost Semantic Role Labelling have the following benefits:
+
+- Little added modelling complexity
+- Ability to extract arbitrary numbers of events/relations/frames per sentence
+- No slower in practice than NER, due to easy batching
 
 
 #### Example 1: Bond Trading
@@ -71,15 +84,20 @@ Show me the [flights TRANSPORT] [between V] [New York SOURCE] and [Boston DESTIN
 Show me the flights between New York and Boston on the 3rd Aug and the [trains TRANSPORT] [from V] [Boston SOURCE] to [Miami DESTINATION] on the [15th DATE].
 ```
 
+#### Your example here
+
+Do you have another example of a task which fits this format? [This blog is open source](https://github.com/DeNeutoy/blog), and written entirely in Markdown files, so it's easy to contribute.
+
+
 ## Semantic Role Labelling
 
-Given i've been waxing lyrical about the benefits of viewing some structured prediction problems as almost semantic role labelling, let's take a look at what the real deal actually is.
+Given i've been waxing lyrical about the benefits of viewing some structured prediction problems as almost semantic role labelling, let's take a look at what the real deal actually is. I'll also go about chopping up and re-organising the labels for SRL into something that I think could be generally useful as a "base" model for people to build applications on top of.
 
 ### What is Semantic Role Labelling?
 
 Semantic role labelling is one framework to describe "events" in natural language, which are normally focused around a verb (but sometimes also nouns) and it's arguments. These arguments also have thematic roles, such as "Agent" or "Instrument".
 
-One commonly used dataset for semantic role labelling is Onotnotes 5, which is annotated using the Propbank schema. Propbank defines arguments for each individual verb, and a set of general purpose modifier labels which can describe alterations/additions to the main event, such as `Purpose`, `Negation`, `Temporal` and several more.
+One commonly used dataset for semantic role labelling is Onotnotes 5, which is annotated using the [Propbank schema](https://propbank.github.io/). Propbank defines arguments for each individual verb, and a set of general purpose modifier labels which can describe alterations/additions to the main event, such as `Purpose`, `Negation`, `Temporal` and several more.
 
 A common reduction of this task in the NLP community is to ignore that the argument definitions are specific to a given verb (i.e that ARG0 may have a different meaning for the verb "eat" than the verb "defibrillate"). In some sense this is a "poor man's" semantic role labelling, and at first glance it seems like such a crude hack would not work particularly well. However, in practice, the arguments for different verbs actually do tend to correlate; ARG0 typically represents the "Agent", or the person/thing doing something in the event, and ARG1 typically represents the "Experiencer". Because of these distributional similarities in predicate arguments in Propbank, this mangled version of SRL actually does carry some meaning, and as we are about to see, could be quite useful.
 
