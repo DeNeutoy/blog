@@ -1,9 +1,10 @@
 
+# Including Javascript in Python Packages
 Recently, i've become much more interested in interactive machine learning, where humans have input into the training, prediction
 or evaluation of machine learning models.
 
 
-# Distributing ML Visualisations
+## Distributing ML Visualisations
 I've been working on several projects surrounding visualisation of embeddings of neural network models for text and annotation tools. As part of this, one major barrier is how to distribute these tools to people that need to use them. For most machine learning tools, the answer to this question is relatively obvious. It *has* to be a pip-installable Python package. Python has dominated as the language for interfacing with powerful machine learning tools and data science tools more generally. It's not going to go away any time soon.
 
 

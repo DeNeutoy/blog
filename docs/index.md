@@ -6,7 +6,7 @@ I'm a computer scientist interested in research, natural language processing and
 
 # Pages
 
-## [Command Line Graphical User Interfaces (CLGUIs)](./clguis.md)
+## [Including Javascript in Python packages](./packaging_uis_in_python.md)
 ## [The Snake Oil of Syntax in Applied NLP](./syntax.md)
 ## [A Numerically Fused Beheading](./numeric_annotation.md)
 ## [An introduction to SpaCy's `DependencyMatcher`](./dependency_matcher.md)
