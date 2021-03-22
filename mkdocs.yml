@@ -7,6 +7,7 @@ nav:
   - SpaCy's Dependency Matcher - An Introduction: dependency_matcher.md
   - Cycling - Eugene, OR to San Fransisco: eugene_to_sf.md
   - Paper Reviews:
+    - Barlow Twins: ./paper_reviews/barlow_twins.md
     - ELECTRA: ./paper_reviews/electra.md
     - No Explainability without Accountability: ./paper_reviews/interactivity_explainability.md
 
