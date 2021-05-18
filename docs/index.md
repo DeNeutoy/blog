@@ -6,6 +6,7 @@ I'm a computer scientist interested in research, natural language processing and
 
 # Pages
 
+## [Cycling the North Coast 500](./nc_500.md)
 ## [Paper Review: Barlow Twins: Self-Supervised Learning via Redundancy Reduction](./paper_reviews/barlow_twins.md)
 ## [Including Javascript in Python packages](./packaging_uis_in_python.md)
 ## [The Snake Oil of Syntax in Applied NLP](./syntax.md)
