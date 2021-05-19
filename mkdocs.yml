@@ -1,6 +1,7 @@
 site_name: markn/writing
 
 nav:
+  - Cycling - The North Coast 500: nc_500.md
   - Including Javascript in Python Packages: packaging_uis_in_python.md
   - A Numerically Fused Beheading: numeric_annotation.md
   - The Snake Oil of Syntax in Applied NLP: syntax.md
