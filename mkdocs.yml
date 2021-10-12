@@ -7,6 +7,8 @@ nav:
   - The Snake Oil of Syntax in Applied NLP: syntax.md
   - SpaCy's Dependency Matcher - An Introduction: dependency_matcher.md
   - Cycling - Eugene, OR to San Fransisco: eugene_to_sf.md
+  - Today I Learned:
+    - Building Lightweight Python Docker Images: ./til/docker-python.md
   - Paper Reviews:
     - Barlow Twins: ./paper_reviews/barlow_twins.md
     - ELECTRA: ./paper_reviews/electra.md
