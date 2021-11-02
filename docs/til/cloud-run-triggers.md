@@ -12,7 +12,7 @@ This worked, but caused Something Very Bad - the Cloud Run API wrote logs to GCS
 
 ### Attempt 2
 
-After some digging I figured out that creating triggers from the commandline is more flexible. So I deleted the trigger I attached to the Cloud Run deployment and created a new one.
+After some digging I figured out that creating triggers from the commandline is more flexible. So I deleted the trigger I attached to the Cloud Run deployment and created a new one. This way actually allowed me to specify that I only want it to trigger for a specific bucket by adding the `--event-filters="bucket=<bucket name>"` argument. This was good because it meant the infinite loop above wouldn't happen.
 
 Created trigger using:
 
