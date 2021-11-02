@@ -9,6 +9,7 @@ nav:
   - Cycling - Eugene, OR to San Fransisco: eugene_to_sf.md
   - Today I Learned:
     - Building Lightweight Python Docker Images: ./til/docker-python.md
+    - Cloud Run triggers from GCS: ./til/cloud-run-triggers.md
   - Paper Reviews:
     - Barlow Twins: ./paper_reviews/barlow_twins.md
     - ELECTRA: ./paper_reviews/electra.md
