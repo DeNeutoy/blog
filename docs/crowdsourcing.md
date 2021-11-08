@@ -17,9 +17,9 @@ As we have seen over the last couple of years, it is very easy to crowdsource da
 
 If you consider that some people have spent their entire research agenda dedicated to how to perform effective crowdsourcing for NLP tasks - it begins to look like an area in which real expertise is required and is not something that should be approached lightly. One such person is [Julian Michael](https://julianmichael.org/). If you are interested in rock solid crowdsourcing for novel NLP tasks (in particular, QA SRL), I strongly recommend checking out some of Julian's papers, in particular:
 
-[Controlled Crowdsourcing for High-Quality QA-SRL Annotation](https://aclanthology.org/2020.acl-main.626/)
-[Crowdsourcing Question-Answer Meaning Representations](https://aclanthology.org/N18-2089/)
-[AmbigQA: Answering Ambiguous Open-domain Questions](https://aclanthology.org/2020.emnlp-main.466/)
+- [Controlled Crowdsourcing for High-Quality QA-SRL Annotation](https://aclanthology.org/2020.acl-main.626/)
+- [Crowdsourcing Question-Answer Meaning Representations](https://aclanthology.org/N18-2089/)
+- [AmbigQA: Answering Ambiguous Open-domain Questions](https://aclanthology.org/2020.emnlp-main.466/)
 
 
 ### Crowdsourcing is not fun work
@@ -29,7 +29,9 @@ Managing a crowdsourcing task is not a fun job. It's difficult, people will anno
 
 ### Crowdsourcing MNLI for $60,000
 
-One aspect of the tutorial slides that really stood out to me was that the overall cost for the MNLI dataset was \$60,000. I would have guessed lower than this as a ballpark figure, but this order of magnitude is relatively standard (e.g whilst I was at AllenNLP, the DROP dataset cost ~$20k to crowdsource). Taking a step back, does this actually represent value for money? I argue certainly not in the case of SNLI. For this much money, certainly in Europe, you could employ two university graduates for a year to annotate a dataset. Assuming they could work at a rate of ~500 examples per day, you could end up with a dataset of 250k (presumably much higher quality) examples just by waiting for a year. This also frees up **your** time, which is important.
+One aspect of the tutorial slides that really stood out to me was that the overall cost for the MNLI dataset was \$60,000. I would have guessed lower than this as a ballpark figure, but this order of magnitude is relatively standard (e.g whilst I was at AllenNLP, the DROP dataset cost ~$20k to crowdsource).
+
+Taking a step back, does this actually represent value for money? I think certainly not in the case of SNLI. For this much money, certainly in Europe, you could employ two university graduates for a year to annotate a dataset. Assuming they could work at a rate of ~500 examples per day, you could end up with a dataset of 250k (presumably much higher quality) examples just by waiting for a year. This also frees up **your** time, which is important.
 
 
 
@@ -41,7 +43,9 @@ So, if crowdsourcing is out the window, what other options are there? Well, it t
 
 Data annotation is not actually so impossibly slow/mundane that you can't do it yourself (and if you do think that, maybe check yourself). I have annotated a dataset of sentences from a legal corpora before by hand, which took me about 2 weeks of occasional work, maybe an hour or so per day. I ended up with a dataset of 2.5k fully annotated sentences, which I used to train an NER model which obtained accuracies in the high 80s/90s in terms of F1.
 
-Also, data annotation is extremely helpful for exposing yourself to actual data, and the huge number of edge cases, context considerations and weirdness that comes with actual human language. It also makes you think about niche design decisions regarding the annotation process itself. You, as a modeler of this data as well as the annotator, *know a lot about how the data will be used and how your model will process it*, which is extremely important. You can read about an example of this in another of my [blog posts](./numeric_annotation.md). If you are creating a dataset on Mechanical Turk, I would strongly recommend that you spend *at least* 2 days just annotating data using the same interface as the crowdworkers you are employing. It will be helpful for the above reasons, but also for other practical things like working out fair pay rates and how much throughput you can expect if the task is being done correctly.
+Also, data annotation is extremely helpful for exposing yourself to actual data, and the huge number of edge cases, context considerations and weirdness that comes with actual human language. It also makes you think about niche design decisions regarding the annotation process itself. You, as a modeler of this data as well as the annotator, *know a lot about how the data will be used and how your model will process it*, which is extremely important. You can read about an example of this in another of my [blog posts](./numeric_annotation.md).
+
+If you are creating a dataset on Mechanical Turk, I would strongly recommend that you spend *at least* 2 days just annotating data using the same interface as the crowdworkers you are employing. It will be helpful for the above reasons, but also for other practical things like working out fair pay rates and how much throughput you can expect if the task is being done correctly.
 
 ### Work with annotators to build smart interfaces
 
@@ -71,4 +75,6 @@ More generally, there are many tasks which have naturally occuring data which is
 
 ### Conclusion
 
-Overall, I found the  EMNLP tutorial slides informative and the case studies quite interesting - I simply want to raise the idea that crowdsourcing is pretty flawed as data collection method (unless you are really an expert at it specifically), not actually very fun to do, and not particularly good for the people doing it. Whilst I don't doubt that crowdsourcing has its uses for "automated" evaluation and gathering "ordinary" (in the supreme court sense) judgements from non-researchers, I think that there are better ways to spend your days, where you can learn more, have more fun, and not contribute to the creation of a weird, data underclass in our society. With advances in modeling techniques over the last couple of years combined with creative or unusual methods for curating naturally occurring textual data, doing interesting/different NLP work is now easier than ever. Thank you for attending my TED talk.
+Overall, I found the  EMNLP tutorial slides informative and the case studies quite interesting - I simply want to raise the idea that crowdsourcing is pretty flawed as data collection method (unless you are really an expert at it specifically), not actually very fun to do, and not particularly good for the people doing it.
+
+Whilst I don't doubt that crowdsourcing has its uses for "automated" evaluation and gathering "ordinary" (in the supreme court sense) judgements from non-researchers, I think that there are better ways to spend your days, where you can learn more, have more fun, and not contribute to the creation of a weird, data underclass in our society. With advances in modeling techniques over the last couple of years combined with creative or unusual methods for curating naturally occurring textual data, doing interesting/different NLP work is now easier than ever. Thank you for attending my TED talk.
