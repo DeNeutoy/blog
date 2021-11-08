@@ -6,7 +6,7 @@ I'm a computer scientist interested in research, natural language processing and
 
 # Pages
 
-## [The Better Angels of our Data](./crowdsourcing.md)
+## [The Better Angels of our Data](./better-angels-of-our-data.md)
 ## [TIL: Setting up Cloud Run Triggers for object creation in GCS](./til/cloud-run-triggers.md)
 ## [TIL: Building Lightweight Python Docker Images](./til/docker-python.md)
 ## [Cycling the North Coast 500](./nc_500.md)
