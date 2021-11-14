@@ -9,6 +9,7 @@ nav:
   - SpaCy's Dependency Matcher - An Introduction: dependency_matcher.md
   - Cycling - Eugene, OR to San Fransisco: eugene_to_sf.md
   - Today I Learned:
+    - Speeding up Cloud Build by an order of magnitude: ./til/cloud-build-speedup.md
     - Building Lightweight Python Docker Images: ./til/docker-python.md
     - Cloud Run triggers from GCS: ./til/cloud-run-triggers.md
   - Paper Reviews:

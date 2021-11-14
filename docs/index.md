@@ -6,6 +6,7 @@ I'm a computer scientist interested in research, natural language processing and
 
 # Pages
 
+## [TIL: Speeding up Cloud Build by an order of magnitude](./til/cloud-build-speedup.md)
 ## [The Better Angels of our Data](./better-angels-of-our-data.md)
 ## [TIL: Setting up Cloud Run Triggers for object creation in GCS](./til/cloud-run-triggers.md)
 ## [TIL: Building Lightweight Python Docker Images](./til/docker-python.md)
