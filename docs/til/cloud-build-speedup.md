@@ -7,9 +7,58 @@ One issue with Cloud Build is that the product managers for the service at Googl
 
 ### The initial CloudBuild file:
 
+```yaml
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - '--no-cache'
+      - '-t'
+      - '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
+      - api
+      - '-f'
+      - api/Dockerfile
+    id: Build
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
+    id: Push
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME
+      - '--platform=managed'
+      - '--image=$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
+      - >-
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID,$_LABELS
+      - '--region=$_DEPLOY_REGION'
+      - '--quiet'
+    id: Deploy
+    entrypoint: gcloud
+timeout: 1200s
+images:
+  - '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
+options:
+  substitutionOption: ALLOW_LOOSE
+substitutions:
+  _LABELS: gcb-trigger-id=c21fdsf16c-373a-41b9-9d80-7fdsffs42d219bc8
+  _TRIGGER_ID: c21fdsfs16c-373a-4fdsfdsb9-9d80-7d342d2fdsfsdc8
+  _DEPLOY_REGION: asia23
+  _GCR_HOSTNAME: us.gcr.io
+  _PLATFORM: managed
+  _SERVICE_NAME: redacted
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - gcp-cloud-build-deploy-cloud-run-managed
+```
+
+
 ### Speeding it up
 
-Currently, the docker build step in the above cloudbuild file uses no cache. To speed this up, we are going to do 4 steps:
+Currently, the docker build step in the above cloudbuild file uses no cache. To speed this up, we are going to do 3 steps:
 
 1. Pull the built image with a `latest` from Google Container Registry
 2. Push the image we build with an additional tag, `latest`, so we can fetch it in the next build.
